@@ -15,11 +15,28 @@ func (tr Trie) Contains(word string) bool {
 }
 
 // List returns []string containing all words held in dictionary
+//
 func (tr Trie) List() []string {
+	return tr.ListFrom("")
+}
+
+// ListFrom returns a list of words in dictionary starting with the prefix
+// If prefix doesn't exist, returns empty list
+//
+func (tr Trie) ListFrom(prefix string) []string {
+	st := tr.root
+	for _, b := range []byte(prefix) {
+		b -= offset
+		if st.children[b] == nil {
+			return []string{}
+		}
+		st = st.children[b]
+	}
+
 	stream := make(chan string, 1000)
 
 	go func() {
-		traverse(tr.root, []byte{}, stream)
+		traverse(st, []byte(prefix), stream)
 		close(stream)
 	}()
 

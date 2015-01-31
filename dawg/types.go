@@ -4,7 +4,6 @@ package dawg
 //
 type Dawg struct {
 	root     *State
-	done     bool
 	register map[string]*State
 }
 
@@ -23,10 +22,6 @@ type Child [26]*State
 // Root ...
 //
 func (dg Dawg) Root() *State { return dg.root }
-
-// Done ...
-//
-func (dg Dawg) Done() bool { return dg.done }
 
 // Register ...
 func (dg Dawg) Register() map[string]*State { return dg.register }

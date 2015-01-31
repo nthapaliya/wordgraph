@@ -2,12 +2,24 @@ package dawg
 
 import "sort"
 
-// List returns words contained by the dictionary in sorted order
+// List emits all words contained in the dictionary, in order
+//
 func (dg Dawg) List() []string {
+	return dg.ListFrom("")
+}
+
+// ListFrom returns all words in the dictionary starting with the given prefix.
+// If a prefix does not exist, returns an empty list.
+func (dg Dawg) ListFrom(prefix string) []string {
+	i, st := dg.root.getPrefix(prefix)
+	if prefix != prefix[:i] {
+		return []string{}
+	}
+
 	list := []string{}
 	stream := make(chan string, 1000)
 	go func() {
-		traverse(dg.root, []byte{}, stream)
+		traverse(st, []byte(prefix), stream)
 		close(stream)
 	}()
 

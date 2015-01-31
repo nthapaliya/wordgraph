@@ -9,13 +9,12 @@ const offset = 97
 
 // NewFromList creates a new Dawg from a slice of sorted strings
 func NewFromList(wordlist []string) (*Dawg, error) {
-	//wordlist = sortAndToLower(wordlist)
 	if !sort.StringsAreSorted(wordlist) {
 		return nil, errors.New("Input is not sorted")
 	}
+
 	dg := &Dawg{
 		root:     &State{false, &Child{}, ""},
-		done:     false,
 		register: make(map[string]*State),
 	}
 
@@ -30,7 +29,6 @@ func NewFromList(wordlist []string) (*Dawg, error) {
 	dg.replaceOrRegister(dg.root)
 
 	// Final Cleanup
-	dg.done = true
 	return dg, nil
 }
 

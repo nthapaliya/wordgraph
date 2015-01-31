@@ -1,6 +1,7 @@
 package dawg_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -62,7 +63,6 @@ func TestVerify(t *testing.T) {
 	dg, err := dawg.NewFromList(wordlist)
 	if err != nil {
 		t.Error(err)
-		return
 	}
 	if ok, err := dg.Verify(); !ok {
 		t.Error(err)
@@ -94,4 +94,17 @@ func TestList(t *testing.T) {
 			t.Errorf("ExtractFromDawg: results don't match")
 		}
 	}
+	l = dg.ListFrom("applx")
+	if len(l) != 0 {
+		t.Errorf("returning items from prefix that doesn't exist")
+	}
+	l = dg.ListFrom("apply")
+	if len(l) != 2 {
+		t.Errorf("returned list seems to be wrong, investigate here")
+	}
+}
+
+func _TestHash(t *testing.T) {
+	r := "186a207b"
+	fmt.Println(r)
 }

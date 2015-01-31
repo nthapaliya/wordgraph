@@ -42,3 +42,8 @@ func hashFNV32a(in string) string {
 
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
+
+// func TestHash() {
+// 	st := &State{true, &Child{}, ""}
+// 	fmt.Println(st.getHash())
+// }

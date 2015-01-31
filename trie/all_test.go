@@ -40,4 +40,13 @@ func TestListAll(t *testing.T) {
 	if falsecount != 0 {
 		t.Errorf("list len equal but produces different words")
 	}
+
+	l = tr.ListFrom("applx")
+	if len(l) != 0 {
+		t.Errorf("producing list when it shouldn't be")
+	}
+	l = tr.ListFrom("apply")
+	if len(l) != 2 {
+		t.Errorf("investigate here, wrong output")
+	}
 }

@@ -42,12 +42,15 @@ func (st *State) addSuffix(suffix string) {
 }
 
 func (st *State) getPrefix(word string) (int, *State) {
-	for i, b := range word {
+	var i int
+	var b byte
+	for _, b = range []byte(word) {
 		b -= offset
 		if st.children[b] == nil {
 			return i, st
 		}
 		st = st.children[b]
+		i++
 	}
-	return 0, st
+	return i, st
 }

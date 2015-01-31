@@ -4,7 +4,6 @@ package dawg
 func FromUnsorted(wordlist []string) *Dawg {
 	dg := &Dawg{
 		root:     &State{false, &Child{}, ""},
-		done:     false,
 		register: make(map[string]*State),
 	}
 
