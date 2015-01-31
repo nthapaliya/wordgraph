@@ -80,3 +80,34 @@ func TestMinimizeDawg(t *testing.T) {
 	mm := cdawg.MinimizeDawg(dg)
 	wordSuite(t, mm)
 }
+
+func TestCDawg(t *testing.T) {
+	cd := cdawg.NewFromList(wordlist)
+	for i := range cd {
+		i++
+	}
+}
+func TestList(t *testing.T) {
+	cd := cdawg.NewFromList(wordlist)
+	l := cd.List()
+	if len(l) != len(wordlist) {
+		t.Errorf("Error. len(wordlist)=%d, len(returnedlist)=%d", len(wordlist), len(l))
+		return
+	}
+
+	for i := range wordlist {
+		if l[i] != wordlist[i] {
+			t.Errorf("List(): results don't match")
+		}
+	}
+
+	l = cd.ListFrom("applx")
+	if len(l) != 0 {
+		t.Errorf("testing applx: len(l)=%d, expected 0", len(l))
+	}
+
+	l = cd.ListFrom("apply")
+	if len(l) != 2 {
+		t.Errorf("testing apply: len(l)=%d, expected 2", len(l))
+	}
+}
