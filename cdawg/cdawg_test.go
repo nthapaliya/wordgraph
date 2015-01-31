@@ -59,36 +59,7 @@ func wordSuite(t *testing.T, cd wordgraph.WordGraph) {
 	}
 }
 
-func TestCompress(t *testing.T) {
-	dg, err := dawg.NewFromList(wordlist)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	cd := cdawg.Compress(dg)
-	wordSuite(t, cd)
-}
-
-func TestMinimize(t *testing.T) {
-	cd := cdawg.NewFromList(wordlist)
-	mm := cd.Minimize()
-	wordSuite(t, mm)
-}
-
-func TestMinimizeDawg(t *testing.T) {
-	dg, _ := dawg.NewFromList(wordlist)
-	mm := cdawg.MinimizeDawg(dg)
-	wordSuite(t, mm)
-}
-
-func TestCDawg(t *testing.T) {
-	cd := cdawg.NewFromList(wordlist)
-	for i := range cd {
-		i++
-	}
-}
-func TestList(t *testing.T) {
-	cd := cdawg.NewFromList(wordlist)
+func testListWordGraph(t *testing.T, cd wordgraph.WordGraph) {
 	l := cd.List()
 	if len(l) != len(wordlist) {
 		t.Errorf("Error. len(wordlist)=%d, len(returnedlist)=%d", len(wordlist), len(l))
@@ -97,7 +68,7 @@ func TestList(t *testing.T) {
 
 	for i := range wordlist {
 		if l[i] != wordlist[i] {
-			t.Errorf("List(): results don't match")
+			t.Errorf("List(): %s != %s", wordlist[i], l[i])
 		}
 	}
 
@@ -110,4 +81,35 @@ func TestList(t *testing.T) {
 	if len(l) != 2 {
 		t.Errorf("testing apply: len(l)=%d, expected 2", len(l))
 	}
+}
+
+func TestCDawg(t *testing.T) {
+	cd := cdawg.NewFromList(wordlist)
+	wordSuite(t, cd)
+	testListWordGraph(t, cd)
+}
+
+func TestCompressDawg(t *testing.T) {
+	dg, err := dawg.NewFromList(wordlist)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	cd := cdawg.Compress(dg)
+	wordSuite(t, cd)
+	testListWordGraph(t, cd)
+}
+
+func TestMinimizeCDawg(t *testing.T) {
+	cd := cdawg.NewFromList(wordlist)
+	mm := cd.Minimize()
+	wordSuite(t, mm)
+	testListWordGraph(t, mm)
+}
+
+func TestMinimizeDawg(t *testing.T) {
+	dg, _ := dawg.NewFromList(wordlist)
+	mm := cdawg.MinimizeDawg(dg)
+	wordSuite(t, mm)
+	testListWordGraph(t, mm)
 }

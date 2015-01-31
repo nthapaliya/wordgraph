@@ -19,13 +19,11 @@ func (cd CDawg) Contains(word string) bool {
 // Contains returns true if string exists in dictionary
 //
 func (cd MDawg) Contains(word string) bool {
-	state := 0
-	index := 0
-	value := 0
-	ok := false
+	var state, index, value int
+	var ok bool
 
 	for _, b := range []byte(word) {
-		if value, ok = cd.has(index, b); !ok {
+		if value, ok = hasByteInRow(cd[index], b); !ok {
 			return false
 		}
 		index = value >> indexShift
@@ -35,8 +33,8 @@ func (cd MDawg) Contains(word string) bool {
 	return decode(state).final
 }
 
-func (cd MDawg) has(state int, b byte) (int, bool) {
-	for _, v := range cd[state] {
+func hasByteInRow(row []int, b byte) (int, bool) {
+	for _, v := range row {
 		ss := decode(v)
 		if b == ss.letter {
 			return v, true
