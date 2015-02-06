@@ -29,8 +29,10 @@ func isEOL(value int) bool {
 	return value&eolBitmask != 0
 }
 
-// MinimizeDawg minimizes a dawg.Dawg. Not recommended for actual use. Use CDawg instead.
-// This is more of a curiosity
+////////////////////////////////////////////////////////////////////////////////
+
+// MinimizeDawg minimizes a dawg.Dawg. This may perform better on your system
+// than a CDawg.
 //
 func MinimizeDawg(dg *dawg.Dawg) (MDawg, error) {
 	cd, err := Compress(dg)
@@ -41,10 +43,11 @@ func MinimizeDawg(dg *dawg.Dawg) (MDawg, error) {
 }
 
 // Minimize creates a flat array MDawg from the given CDawg structure
+// TODO: add more safety checks
 //
 func (cd CDawg) Minimize() (MDawg, error) {
 	if len(cd) == 0 {
-		return nil, errors.New("Empty Compressed Dawg passed in for minimization")
+		return nil, errors.New("Empty CDawg passed in for minimization")
 	}
 	counter := 0
 	newIndex := make(map[int]int)
@@ -61,13 +64,15 @@ func (cd CDawg) Minimize() (MDawg, error) {
 	nextavailable := 0
 	for i := range cd {
 		for j := range cd[i] {
-			oldIndex := cd[i][j] >> indexShift
+			oldIndex := firstChild(cd[i][j])
 			td[nextavailable] = (cd[i][j] & indexBitmask) + (newIndex[oldIndex] << indexShift)
 			nextavailable++
 		}
 	}
 	return td, nil
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Contains returns true if string exists in dictionary
 //
@@ -78,7 +83,7 @@ func (md MDawg) Contains(word string) bool {
 		if val, ok = hasByteBeforeEOL(md[index:], b); !ok {
 			return false
 		}
-		index = val >> indexShift
+		index = firstChild(val)
 	}
 	return val&finalBitmask != 0
 }
@@ -92,4 +97,48 @@ func hasByteBeforeEOL(values []int, b byte) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// List returns a sorted list of all words contained in dictionary
+//
+func (md MDawg) List() []string {
+	return md.ListFrom("")
+}
+
+// ListFrom returns a list of words that start with given prefix. If prefix doesn't
+// exist in dictionary, returns an empty list
+//
+func (md MDawg) ListFrom(prefix string) []string {
+	value := 1 << indexShift // so that letter(value)==0. we'll be adding it after the fact.
+	{
+		index := 1
+		var ok bool
+
+		for _, b := range []byte(prefix) {
+			if value, ok = hasByteBeforeEOL(md[index:], b); !ok {
+				return []string{}
+			}
+			index = firstChild(value)
+		}
+	}
+	// if we exit from that block, index will now have our the last good state in the prefix
+	f := md.traverseMDawg
+	return readFromStream(f, value, prefix)
+}
+
+func (md MDawg) traverseMDawg(val int, prefix []byte, stream chan string) {
+	if val == eolBitmask {
+		return
+	}
+	if isFinal(val) {
+		stream <- string(prefix)
+	}
+	for _, value := range md[firstChild(val):] {
+		md.traverseMDawg(value, append(prefix, letter(value)), stream)
+		if isEOL(value) { // we have to stop at the EOL
+			return
+		}
+	}
 }

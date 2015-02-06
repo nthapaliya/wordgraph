@@ -1,6 +1,10 @@
 package cdawg
 
-import "github.com/nthapaliya/wordgraph/dawg"
+import (
+	"sort"
+
+	"github.com/nthapaliya/wordgraph/dawg"
+)
 
 const (
 	offset        = 'a'
@@ -179,7 +183,7 @@ func readFromStream(f func(int, []byte, chan string), val int, prefix string) []
 	for word := range stream {
 		outputlist = append(outputlist, word)
 	}
-	// sort.Strings(outputlist)
+	sort.Strings(outputlist)
 	return outputlist
 
 }

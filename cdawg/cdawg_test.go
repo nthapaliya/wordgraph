@@ -86,13 +86,13 @@ func testContains(t *testing.T, cd wordgraph.WordGraph) {
 func testList(t *testing.T, cd wordgraph.WordGraph) {
 	l := cd.List()
 	if len(l) != len(wordlist) {
-		t.Errorf("len(wordlist)=%d, len(returnedlist)=%d", len(wordlist), len(l))
+		t.Fatalf("len(wordlist)=%d, len(returnedlist)=%d", len(wordlist), len(l))
 		return
 	}
 
 	for i := range wordlist {
 		if l[i] != wordlist[i] {
-			t.Fatalf("List(): %s != %s", wordlist[i], l[i])
+			t.Fatalf("List(): %v != %v", []byte(wordlist[i]), []byte(l[i]))
 		}
 	}
 
@@ -196,4 +196,5 @@ func TestMinimizeCDawg(t *testing.T) {
 		t.Fatal(err)
 	}
 	testContains(t, mm)
+	testList(t, mm)
 }
