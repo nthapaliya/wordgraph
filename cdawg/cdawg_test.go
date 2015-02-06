@@ -20,7 +20,7 @@ const (
 
 var (
 	random   = rand.New(rand.NewSource(time.Now().Unix()))
-	wordlist = wordgraph.LoadSame()
+	wordlist = wordgraph.LoadFile("../files/SWOPODS.txt")
 )
 
 var badwords = []string{
@@ -92,7 +92,7 @@ func testList(t *testing.T, cd wordgraph.WordGraph) {
 
 	for i := range wordlist {
 		if l[i] != wordlist[i] {
-			t.Errorf("List(): %s != %s", wordlist[i], l[i])
+			t.Fatalf("List(): %s != %s", wordlist[i], l[i])
 		}
 	}
 
@@ -108,6 +108,10 @@ func testList(t *testing.T, cd wordgraph.WordGraph) {
 }
 
 func TestCompressDawg(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skip creating and compressing dawg in short mode.")
+	}
+
 	dg, err := dawg.NewFromList(wordlist)
 	if err != nil {
 		t.Error(err)
@@ -124,14 +128,14 @@ func TestCDawgUnmarshal(t *testing.T) {
 	testList(t, cd)
 }
 
-func _TestReadWriteFromFile(t *testing.T) {
+func TestReadWriteFromFile(t *testing.T) {
 	cd1, _ := cdawg.NewFromList(wordlist)
-	err := cdawg.MarshalJSON("cd.json", cd1)
+	err := cdawg.MarshalJSON("/tmp/cd.json", cd1)
 	if err != nil {
 		t.Error(err)
 	}
 
-	cd2, err := cdawg.UnmarshalJSON("cd.json")
+	cd2, err := cdawg.UnmarshalJSON("/tmp/cd.json")
 	if err != nil {
 		t.Error(err)
 	}
@@ -140,33 +144,33 @@ func _TestReadWriteFromFile(t *testing.T) {
 	}
 }
 
-func _TestEncodeDecode(t *testing.T) {
+func TestEncodeDecode(t *testing.T) {
 	cd, err := cdawg.UnmarshalJSON("../files/cd.json")
 	if err != nil {
 		t.Error(err)
 	}
-	encoded, _ := cdawg.EncodeToBinary(cd)
-	decoded, _ := cdawg.DecodeFromBinary(encoded)
+	encoded, _ := cdawg.EncodeToBytes(cd)
+	decoded, _ := cdawg.DecodeFromBytes(encoded)
 	equals(t, cd, decoded)
 }
 
-func _TestBinaryEncodeDecode(t *testing.T) {
+func TestBinaryEncodeDecode(t *testing.T) {
 	cd1, err := cdawg.UnmarshalJSON("../files/cd.json")
 	if err != nil {
 		t.Error(err)
 	}
-	b1, err := cdawg.EncodeToBinary(cd1)
+	b1, err := cdawg.EncodeToBytes(cd1)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = ioutil.WriteFile("cd.bin.tmp", b1, 0644)
+	err = ioutil.WriteFile("/tmp/cd.bin.tmp", b1, 0644)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	b2, err := ioutil.ReadFile("cd.bin.tmp")
+	b2, err := ioutil.ReadFile("/tmp/cd.bin.tmp")
 	if err != nil {
 		t.Error(err)
 		return
@@ -174,7 +178,7 @@ func _TestBinaryEncodeDecode(t *testing.T) {
 	if !bytes.Equal(b1, b2) {
 		t.Error("bytes not equal!")
 	}
-	cd2, err := cdawg.DecodeFromBinary(b2)
+	cd2, err := cdawg.DecodeFromBytes(b2)
 	if err != nil {
 		t.Error(err)
 		return
@@ -185,8 +189,11 @@ func _TestBinaryEncodeDecode(t *testing.T) {
 	}
 }
 
-func _TestMinimizeCDawg(t *testing.T) {
-	cd, _ := cdawg.UnmarshalJSON("../files/cd.json")
-	mm, _ := cd.Minimize()
+func TestMinimizeCDawg(t *testing.T) {
+	cd, err := cdawg.UnmarshalJSON("../files/cd.json")
+	mm, err := cd.Minimize()
+	if err != nil {
+		t.Fatal(err)
+	}
 	testContains(t, mm)
 }

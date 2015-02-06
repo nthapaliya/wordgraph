@@ -36,7 +36,7 @@ func (cd CDawg) traverseMDawg(val int, prefix []byte, stream chan string) {
 		stream <- string(prefix)
 	}
 	for _, value := range cd[val>>indexShift] {
-		cd.traverseMDawg(value, append(prefix, offset+byte(value&letterBitmask)), stream)
+		cd.traverseMDawg(value, append(prefix, byte(value&letterBitmask)), stream)
 	}
 
 }

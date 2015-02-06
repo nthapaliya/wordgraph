@@ -83,7 +83,7 @@ func Compress(dg *dawg.Dawg) (CDawg, error) {
 					stateAt[lastIndex] = v
 					delete(register, hash)
 				}
-				val := letter + (indexOf[hash] << indexShift)
+				val := (letter + offset) + (indexOf[hash] << indexShift)
 				if child.Final() {
 					val += finalBitmask
 				}
@@ -102,22 +102,10 @@ func Compress(dg *dawg.Dawg) (CDawg, error) {
 //
 func (cd CDawg) Contains(word string) bool {
 	index, value := 1, 0
-	// var ok bool
+	var ok bool
 
 	for _, b := range []byte(word) {
-		value = 0
-		// if value, ok = hasByteInRow(cd[index], b); !ok {
-		// 	return false
-		// }
-
-		b -= offset
-		for _, v := range cd[index] {
-			if b == letter(v) {
-				value = v
-				break
-			}
-		}
-		if value == 0 {
+		if value, ok = hasByteInRow(cd[index], b); !ok {
 			return false
 		}
 		index = value >> indexShift
@@ -127,7 +115,6 @@ func (cd CDawg) Contains(word string) bool {
 }
 
 func hasByteInRow(row []int, b byte) (int, bool) {
-	b -= offset
 	for _, v := range row {
 		letter := letter(v)
 		if b == letter {

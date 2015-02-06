@@ -12,11 +12,6 @@ func init() {
 	log.SetFlags(log.Lshortfile)
 }
 
-// LoadSame utility function used by sub-packages
-func LoadSame() []string {
-	return LoadFile("../files/SWOPODS.txt")
-}
-
 // LoadFile ...
 func LoadFile(filename string) []string {
 	inputFile, err := os.Open(filename)

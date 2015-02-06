@@ -8,7 +8,10 @@ import (
 	"io/ioutil"
 )
 
-func EncodeToBinary(cd CDawg) ([]byte, error) {
+// EncodeToBytes encodes the CDawg to bytes for compact storage as a binary file
+// on your hard-disk
+//
+func EncodeToBytes(cd CDawg) ([]byte, error) {
 	out := []uint32{}
 
 	for i := range cd {
@@ -25,7 +28,9 @@ func EncodeToBinary(cd CDawg) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func DecodeFromBinary(input []byte) (CDawg, error) {
+// DecodeFromBytes takes in a byte sequence that is read from a saved binary file
+// representing the CDawg
+func DecodeFromBytes(input []byte) (CDawg, error) {
 	buf := bytes.NewBuffer(input)
 	flatcd := make([]uint32, len(input)/4)
 	err := binary.Read(buf, binary.LittleEndian, flatcd)
@@ -47,6 +52,9 @@ func DecodeFromBinary(input []byte) (CDawg, error) {
 	return cd, nil
 }
 
+// MarshalJSON saves the CDawg structure as a simple JSON file for cross
+// program portability
+//
 func MarshalJSON(filename string, cd CDawg) error {
 	b, err := json.Marshal(cd)
 
@@ -60,6 +68,9 @@ func MarshalJSON(filename string, cd CDawg) error {
 	return nil
 }
 
+// UnmarshalJSON reads a JSON file that has been previously saved. Note this is only
+// for the 2D array form CDawg.
+//
 func UnmarshalJSON(filename string) (CDawg, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -71,4 +82,46 @@ func UnmarshalJSON(filename string) (CDawg, error) {
 		return nil, err
 	}
 	return *cd, nil
+}
+
+// reference functions, not exported yet. Just for testing
+//
+func _WriteMDtofile() {
+	cd, err := UnmarshalJSON("../files/cd.json")
+	mm, err := cd.Minimize()
+	if err != nil {
+		return
+	}
+	out := make([]uint32, len(mm))
+	for i, v := range mm {
+		out[i] = uint32(v)
+	}
+
+	buf := new(bytes.Buffer)
+	err = binary.Write(buf, binary.LittleEndian, out)
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile("md.bin.tmp", buf.Bytes(), 0644)
+	if err != nil {
+		return
+	}
+}
+
+func _ReadMDfromfile() {
+	b, err := ioutil.ReadFile("md.bin.tmp")
+	if err != nil {
+		return
+	}
+	buf := bytes.NewBuffer(b)
+
+	out := make([]uint32, buf.Len()/4)
+
+	err = binary.Read(buf, binary.LittleEndian, out)
+	if err != nil {
+		return
+	}
+	fmt.Println(out[:20])
+
 }

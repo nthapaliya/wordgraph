@@ -16,11 +16,8 @@ var (
 	random   = rand.New(rand.NewSource(time.Now().Unix()))
 )
 
-func BenchmarkCDawg(b *testing.B) {
-	cd, err := cdawg.UnmarshalJSON("./files/cd.json")
-	if err != nil {
-		b.Fatal(err)
-	}
+func BenchmarkTrie(b *testing.B) {
+	cd := trie.NewFromList(wordlist)
 	benchmarkWordGraph(b, cd)
 }
 
@@ -29,9 +26,21 @@ func BenchmarkDawg(b *testing.B) {
 	benchmarkWordGraph(b, cd)
 }
 
-func BenchmarkTrie(b *testing.B) {
-	cd := trie.NewFromList(wordlist)
+func BenchmarkCDawg(b *testing.B) {
+	cd, err := cdawg.UnmarshalJSON("files/cd.json")
+	if err != nil {
+		b.Fatal(err)
+	}
 	benchmarkWordGraph(b, cd)
+}
+
+func BenchmarkMDawg(b *testing.B) {
+	cd, err := cdawg.UnmarshalJSON("files/cd.json")
+	mm, err := cd.Minimize()
+	if err != nil {
+		b.Fatal(err)
+	}
+	benchmarkWordGraph(b, mm)
 }
 
 func BenchmarkMap(b *testing.B) {
@@ -39,15 +48,13 @@ func BenchmarkMap(b *testing.B) {
 	for _, word := range wordlist {
 		register[word] = true
 	}
-	// contains := func(word string) bool {
-	// 	return register[word]
-	// }
+	shuffled := wordgraph.Shuffle(wordlist)
+	length := len(shuffled)
+
+	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		word := wordlist[random.Intn(len(wordlist))]
-		// contains(word)
-		if register[word] {
-			// do nothing
+		if register[shuffled[n%length]] {
 		}
 	}
 }
