@@ -1,6 +1,8 @@
 package cdawg_test
 
 import (
+	"bytes"
+	"io/ioutil"
 	"math/rand"
 	"testing"
 	"time"
@@ -105,7 +107,7 @@ func testListWordGraph(t *testing.T, cd wordgraph.WordGraph) {
 	}
 }
 
-func _TestCompressDawg(t *testing.T) {
+func TestCompressDawg(t *testing.T) {
 	dg, err := dawg.NewFromList(wordlist)
 	if err != nil {
 		t.Error(err)
@@ -116,14 +118,14 @@ func _TestCompressDawg(t *testing.T) {
 	testListWordGraph(t, cd)
 }
 
-func _TestMinimizeCDawg(t *testing.T) {
+func TestMinimizeCDawg(t *testing.T) {
 	cd, _ := cdawg.NewFromList(wordlist)
 	mm, _ := cd.Minimize()
 	wordSuite(t, mm)
 	testListWordGraph(t, mm)
 }
 
-func _TestUnminimize(t *testing.T) {
+func TestUnminimize(t *testing.T) {
 	cd, _ := cdawg.NewFromList(wordlist)
 	mm, _ := cd.Minimize()
 	newcd := cdawg.Unminimize(mm)
@@ -141,15 +143,15 @@ func _TestUnminimize(t *testing.T) {
 	}
 }
 
-func _TestReadWriteFromFile(t *testing.T) {
+func TestReadWriteFromFile(t *testing.T) {
 	cd, _ := cdawg.NewFromList(wordlist)
 	md, _ := cd.Minimize()
-	err := cdawg.WriteToFile("md.json", md)
+	err := cdawg.MarshalJSON("md.json", md)
 	if err != nil {
 		t.Error(err)
 	}
 
-	md2, err := cdawg.ReadFromFile("md.json")
+	md2, err := cdawg.UnmarshalJSON("md.json")
 	if err != nil {
 		t.Error(err)
 	}
@@ -159,11 +161,50 @@ func _TestReadWriteFromFile(t *testing.T) {
 }
 
 func TestEncodeDecode(t *testing.T) {
-	md, err := cdawg.ReadFromFile("../files/md.json")
+	md, err := cdawg.UnmarshalJSON("../files/md.json")
 	if err != nil {
 		t.Error(err)
 	}
-	encoded := cdawg.EncodeToBinary(md)
-	decoded := cdawg.DecodeFromBinary(encoded)
+	encoded, _ := cdawg.EncodeToBinary(md)
+	decoded, _ := cdawg.DecodeFromBinary(encoded)
 	equals(t, md, decoded)
+}
+
+func TestBinaryEncodeDecode(t *testing.T) {
+	md1, err := cdawg.UnmarshalJSON("../files/md.json")
+	if err != nil {
+		t.Error(err)
+	}
+	b1, err := cdawg.EncodeToBinary(md1)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = ioutil.WriteFile("md.bin.tmp", b1, 0644)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	b2, err := ioutil.ReadFile("md.bin.tmp")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !bytes.Equal(b1, b2) {
+		t.Error("bytes not equal!")
+	}
+	md2, err := cdawg.DecodeFromBinary(b2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !equals(t, md1, md2) {
+		t.Error("md's not equal")
+		return
+	}
+}
+
+func TestTest(t *testing.T) {
+	cdawg.Test()
 }

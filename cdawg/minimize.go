@@ -11,6 +11,7 @@ const (
 	eolBitmask    = 1 << 9
 	letterBitmask = 0xff
 	indexShift    = 10
+	indexBitmask  = (1 << indexShift) - 1
 )
 
 // MDawg is a minimized form of CDawg. Arcs are represented as indices to start of
@@ -19,12 +20,6 @@ const (
 // MUCH slower.
 //
 type MDawg [][]int
-
-type smallState struct {
-	letter byte
-	index  int
-	final  bool
-}
 
 // MinimizeDawg minimizes a dawg.Dawg
 func MinimizeDawg(dg *dawg.Dawg) (MDawg, error) {
@@ -62,20 +57,68 @@ func (cd CDawg) Minimize() (MDawg, error) {
 	return matrix, nil
 }
 
-func decode(value int) *smallState {
-	letter := byte(value & letterBitmask)
-	index := value >> indexShift
-	final := false
-	if (value & finalBitmask) != 0 {
-		final = true
-	}
-	return &smallState{
-		letter: letter,
-		index:  int(index),
-		final:  final,
-	}
+func isFinal(value int) bool {
+	return value&finalBitmask != 0
 }
 
-func (ss smallState) String() string {
-	return fmt.Sprintf("%c, %d, %v\n", ss.letter, ss.index, ss.final)
+func letter(value int) byte {
+	return byte(value & letterBitmask)
+}
+
+func firstChild(value int) int {
+	return value >> indexShift
+}
+
+func next(value int) int {
+	if isEOL(value) {
+		return 0
+	}
+	return value + 1
+}
+
+func isEOL(value int) bool {
+	return value&eolBitmask != 0
+}
+
+type tdawg []int
+
+func Test() {
+	md, _ := UnmarshalJSON("../files/md.json")
+	td := md.create()
+	fmt.Println(td[:100])
+	i := 1
+	eol := false
+	for !eol {
+		val := td[i]
+		l := string(letter(val))
+		final := isFinal(val)
+		eol = isEOL(val)
+		fmt.Printf("val: %d, %s is final? %v, is eol? %v\n", val, l, final, eol)
+		i++
+	}
+}
+func (md MDawg) create() tdawg {
+	counter := 0
+	fromTo := make(map[int]int)
+	for i := range md {
+		for j := range md[i] {
+			v := md[i][j] >> indexShift
+			if _, ok := fromTo[v]; !ok {
+				fromTo[v] = counter
+			}
+			counter++
+		}
+	}
+	fmt.Println(len(fromTo), counter)
+	td := make(tdawg, counter)
+
+	nextavailable := 0
+	for i := range md {
+		for j := range md[i] {
+			from := md[i][j] >> indexShift
+			td[nextavailable] = (md[i][j] & indexBitmask) + (fromTo[from] << indexShift)
+			nextavailable++
+		}
+	}
+	return td
 }

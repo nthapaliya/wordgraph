@@ -31,13 +31,13 @@ func (md MDawg) Contains(word string) bool {
 		state = value
 	}
 
-	return decode(state).final
+	return isFinal(state)
 }
 
 func hasByteInRow(row []int, b byte) (int, bool) {
 	for _, v := range row {
-		ss := decode(v)
-		if b == ss.letter {
+		letter := letter(v)
+		if b == letter {
 			return v, true
 		}
 	}
