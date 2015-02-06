@@ -51,3 +51,5 @@ _testmain.go
 *.prof
 
 *.tmp
+*.json
+*.zip

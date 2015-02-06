@@ -16,14 +16,11 @@ var (
 	random   = rand.New(rand.NewSource(time.Now().Unix()))
 )
 
-func BenchmarkMDawg(b *testing.B) {
-	cd, _ := cdawg.NewFromList(wordlist)
-	mn, _ := cd.Minimize()
-	benchmarkWordGraph(b, mn)
-}
-
 func BenchmarkCDawg(b *testing.B) {
-	cd, _ := cdawg.NewFromList(wordlist)
+	cd, err := cdawg.UnmarshalJSON("./files/cd.json")
+	if err != nil {
+		b.Fatal(err)
+	}
 	benchmarkWordGraph(b, cd)
 }
 
@@ -55,10 +52,13 @@ func BenchmarkMap(b *testing.B) {
 	}
 }
 
-func benchmarkWordGraph(b *testing.B, cd wordgraph.WordGraph) {
+func benchmarkWordGraph(b *testing.B, wg wordgraph.WordGraph) {
+	shuffled := wordgraph.Shuffle(wordlist)
+	length := len(shuffled)
+
 	b.ResetTimer()
+
 	for n := 0; n < b.N; n++ {
-		word := wordlist[random.Intn(len(wordlist))]
-		cd.Contains(word)
+		wg.Contains(shuffled[n%length])
 	}
 }

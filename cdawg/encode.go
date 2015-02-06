@@ -8,12 +8,12 @@ import (
 	"io/ioutil"
 )
 
-func EncodeToBinary(md MDawg) ([]byte, error) {
+func EncodeToBinary(cd CDawg) ([]byte, error) {
 	out := []uint32{}
 
-	for i := range md {
-		for j := range md[i] {
-			out = append(out, uint32(md[i][j]))
+	for i := range cd {
+		for j := range cd[i] {
+			out = append(out, uint32(cd[i][j]))
 		}
 	}
 
@@ -25,30 +25,30 @@ func EncodeToBinary(md MDawg) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func DecodeFromBinary(input []byte) (MDawg, error) {
+func DecodeFromBinary(input []byte) (CDawg, error) {
 	buf := bytes.NewBuffer(input)
-	flatmd := make([]uint32, len(input)/4)
-	err := binary.Read(buf, binary.LittleEndian, flatmd)
+	flatcd := make([]uint32, len(input)/4)
+	err := binary.Read(buf, binary.LittleEndian, flatcd)
 	if err != nil {
 		return nil, fmt.Errorf("binary.Read failed: %s", err)
 	}
 
-	md := MDawg{}
+	cd := CDawg{}
 	row := []int{}
 
-	for _, val := range flatmd {
+	for _, val := range flatcd {
 		eol := val&eolBitmask != 0
 		row = append(row, int(val))
 		if eol {
-			md = append(md, row)
+			cd = append(cd, row)
 			row = []int{}
 		}
 	}
-	return md, nil
+	return cd, nil
 }
 
-func MarshalJSON(filename string, md MDawg) error {
-	b, err := json.Marshal(md)
+func MarshalJSON(filename string, cd CDawg) error {
+	b, err := json.Marshal(cd)
 
 	if err != nil {
 		return err
@@ -60,15 +60,15 @@ func MarshalJSON(filename string, md MDawg) error {
 	return nil
 }
 
-func UnmarshalJSON(filename string) (MDawg, error) {
+func UnmarshalJSON(filename string) (CDawg, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	md := &MDawg{}
-	err = json.Unmarshal(b, md)
+	cd := &CDawg{}
+	err = json.Unmarshal(b, cd)
 	if err != nil {
 		return nil, err
 	}
-	return *md, nil
+	return *cd, nil
 }

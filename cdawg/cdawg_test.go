@@ -36,7 +36,7 @@ var badwords = []string{
 	"verificatio",
 }
 
-func equals(t *testing.T, a, b cdawg.MDawg) bool {
+func equals(t *testing.T, a, b cdawg.CDawg) bool {
 	if len(a) != len(b) {
 		t.Errorf("wanted len %d, got %d", len(a), len(b))
 		return false
@@ -58,7 +58,7 @@ func equals(t *testing.T, a, b cdawg.MDawg) bool {
 	return true
 }
 
-func wordSuite(t *testing.T, cd wordgraph.WordGraph) {
+func testContains(t *testing.T, cd wordgraph.WordGraph) {
 	var good, bad int
 	for _, word := range wordlist {
 		if !cd.Contains(word) {
@@ -68,7 +68,7 @@ func wordSuite(t *testing.T, cd wordgraph.WordGraph) {
 		}
 	}
 	if bad != 0 {
-		t.Errorf("bad = %d", bad)
+		t.Errorf("Contains(word): bad = %d, expected 0", bad)
 	}
 	good, bad = 0, 0
 	for _, word := range badwords {
@@ -79,11 +79,11 @@ func wordSuite(t *testing.T, cd wordgraph.WordGraph) {
 		}
 	}
 	if good != 0 {
-		t.Errorf("good = %d", good)
+		t.Errorf("Contains(word): good = %d, expected 0", good)
 	}
 }
 
-func testListWordGraph(t *testing.T, cd wordgraph.WordGraph) {
+func testList(t *testing.T, cd wordgraph.WordGraph) {
 	l := cd.List()
 	if len(l) != len(wordlist) {
 		t.Errorf("len(wordlist)=%d, len(returnedlist)=%d", len(wordlist), len(l))
@@ -114,79 +114,59 @@ func TestCompressDawg(t *testing.T) {
 		return
 	}
 	cd, _ := cdawg.Compress(dg)
-	wordSuite(t, cd)
-	testListWordGraph(t, cd)
+	testContains(t, cd)
+	testList(t, cd)
 }
 
-func TestMinimizeCDawg(t *testing.T) {
-	cd, _ := cdawg.NewFromList(wordlist)
-	mm, _ := cd.Minimize()
-	wordSuite(t, mm)
-	testListWordGraph(t, mm)
+func TestCDawgUnmarshal(t *testing.T) {
+	cd, _ := cdawg.UnmarshalJSON("../files/cd.json")
+	testContains(t, cd)
+	testList(t, cd)
 }
 
-func TestUnminimize(t *testing.T) {
-	cd, _ := cdawg.NewFromList(wordlist)
-	mm, _ := cd.Minimize()
-	newcd := cdawg.Unminimize(mm)
-	if len(cd) != len(newcd) {
-		t.Errorf("unminimized cd not same length as original")
-		return
-	}
-	for i := range cd {
-		for j := range cd[i] {
-			if cd[i][j] != newcd[i][j] {
-				t.Errorf("need %d, got %d", cd[i][j], newcd[i][j])
-				return
-			}
-		}
-	}
-}
-
-func TestReadWriteFromFile(t *testing.T) {
-	cd, _ := cdawg.NewFromList(wordlist)
-	md, _ := cd.Minimize()
-	err := cdawg.MarshalJSON("md.json", md)
+func _TestReadWriteFromFile(t *testing.T) {
+	cd1, _ := cdawg.NewFromList(wordlist)
+	err := cdawg.MarshalJSON("cd.json", cd1)
 	if err != nil {
 		t.Error(err)
 	}
 
-	md2, err := cdawg.UnmarshalJSON("md.json")
+	cd2, err := cdawg.UnmarshalJSON("cd.json")
 	if err != nil {
 		t.Error(err)
 	}
-	if !equals(t, md, md2) {
+	if !equals(t, cd1, cd2) {
 		t.Errorf("two are not equal")
 	}
 }
 
-func TestEncodeDecode(t *testing.T) {
-	md, err := cdawg.UnmarshalJSON("../files/md.json")
+func _TestEncodeDecode(t *testing.T) {
+	cd, err := cdawg.UnmarshalJSON("../files/cd.json")
 	if err != nil {
 		t.Error(err)
 	}
-	encoded, _ := cdawg.EncodeToBinary(md)
+	encoded, _ := cdawg.EncodeToBinary(cd)
 	decoded, _ := cdawg.DecodeFromBinary(encoded)
-	equals(t, md, decoded)
+	equals(t, cd, decoded)
 }
 
-func TestBinaryEncodeDecode(t *testing.T) {
-	md1, err := cdawg.UnmarshalJSON("../files/md.json")
+func _TestBinaryEncodeDecode(t *testing.T) {
+	cd1, err := cdawg.UnmarshalJSON("../files/cd.json")
 	if err != nil {
 		t.Error(err)
 	}
-	b1, err := cdawg.EncodeToBinary(md1)
+	b1, err := cdawg.EncodeToBinary(cd1)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = ioutil.WriteFile("md.bin.tmp", b1, 0644)
+	err = ioutil.WriteFile("cd.bin.tmp", b1, 0644)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	b2, err := ioutil.ReadFile("md.bin.tmp")
+	b2, err := ioutil.ReadFile("cd.bin.tmp")
 	if err != nil {
 		t.Error(err)
 		return
@@ -194,17 +174,19 @@ func TestBinaryEncodeDecode(t *testing.T) {
 	if !bytes.Equal(b1, b2) {
 		t.Error("bytes not equal!")
 	}
-	md2, err := cdawg.DecodeFromBinary(b2)
+	cd2, err := cdawg.DecodeFromBinary(b2)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if !equals(t, md1, md2) {
-		t.Error("md's not equal")
+	if !equals(t, cd1, cd2) {
+		t.Error("cd's not equal")
 		return
 	}
 }
 
-func TestTest(t *testing.T) {
-	cdawg.Test()
+func _TestMinimizeCDawg(t *testing.T) {
+	cd, _ := cdawg.UnmarshalJSON("../files/cd.json")
+	mm, _ := cd.Minimize()
+	testContains(t, mm)
 }
