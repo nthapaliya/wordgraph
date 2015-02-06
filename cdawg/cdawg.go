@@ -98,6 +98,8 @@ func Compress(dg *dawg.Dawg) (CDawg, error) {
 	return cd, nil
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 // Contains returns true if string exists in dictionary
 //
 func (cd CDawg) Contains(word string) bool {
@@ -108,7 +110,7 @@ func (cd CDawg) Contains(word string) bool {
 		if value, ok = hasByteInRow(cd[index], b); !ok {
 			return false
 		}
-		index = value >> indexShift
+		index = firstChild(value)
 	}
 
 	return isFinal(value)
@@ -122,4 +124,62 @@ func hasByteInRow(row []int, b byte) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// List returns a sorted list of all words contained in dictionary
+//
+func (cd CDawg) List() []string {
+	return cd.ListFrom("")
+}
+
+// ListFrom returns a list of words that start with given prefix. If prefix doesn't
+// exist in dictionary, returns an empty list
+//
+func (cd CDawg) ListFrom(prefix string) []string {
+	value := 1 << indexShift
+	{
+		index := 1
+		var ok bool
+
+		for _, b := range []byte(prefix) {
+			if value, ok = hasByteInRow(cd[index], b); !ok {
+				return []string{}
+			}
+			index = firstChild(value)
+		}
+	}
+	// if block successfully exited, value now holds the last good prefix value, aka our starting point
+	f := cd.traverseCDawg
+	return readFromStream(f, value, prefix)
+}
+
+func (cd CDawg) traverseCDawg(val int, prefix []byte, stream chan string) {
+	if val == eolBitmask {
+		// we have to manually check if we are at cd[0], otherwise recursion will not terminate
+		return
+	}
+	if isFinal(val) {
+		stream <- string(prefix)
+	}
+	for _, value := range cd[firstChild(val)] {
+		cd.traverseCDawg(value, append(prefix, letter(value)), stream)
+	}
+}
+
+func readFromStream(f func(int, []byte, chan string), val int, prefix string) []string {
+	stream := make(chan string, 1000)
+	go func() {
+		f(val, []byte(prefix), stream)
+		close(stream)
+	}()
+
+	outputlist := []string{}
+	for word := range stream {
+		outputlist = append(outputlist, word)
+	}
+	// sort.Strings(outputlist)
+	return outputlist
+
 }
