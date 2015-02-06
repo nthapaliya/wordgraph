@@ -14,8 +14,9 @@ func NewFromList(wordlist []string) (*Dawg, error) {
 	}
 
 	dg := &Dawg{
-		root:     &State{false, &Child{}, ""},
+		root:     &State{false, &Child{}, "", 0},
 		register: make(map[string]*State),
+		count:    1,
 	}
 
 	for _, word := range wordlist {
@@ -24,7 +25,7 @@ func NewFromList(wordlist []string) (*Dawg, error) {
 		if hasChildren(prefix) {
 			dg.replaceOrRegister(prefix)
 		}
-		prefix.addSuffix(word[index:])
+		dg.addSuffix(prefix, word[index:])
 	}
 	dg.replaceOrRegister(dg.root)
 

@@ -16,45 +16,25 @@ var (
 	random   = rand.New(rand.NewSource(time.Now().Unix()))
 )
 
-func BenchmarkMin(b *testing.B) {
-	cd := cdawg.NewFromList(wordlist)
-	mn := cd.Minimize()
-
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		word := wordlist[random.Intn(len(wordlist))]
-		mn.Contains(word)
-	}
+func BenchmarkMDawg(b *testing.B) {
+	cd, _ := cdawg.NewFromList(wordlist)
+	mn, _ := cd.Minimize()
+	benchmarkWordGraph(b, mn)
 }
 
 func BenchmarkCDawg(b *testing.B) {
-	cd := cdawg.NewFromList(wordlist)
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
-		word := wordlist[random.Intn(len(wordlist))]
-		cd.Contains(word)
-	}
+	cd, _ := cdawg.NewFromList(wordlist)
+	benchmarkWordGraph(b, cd)
 }
 
 func BenchmarkDawg(b *testing.B) {
 	cd, _ := dawg.NewFromList(wordlist)
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
-		word := wordlist[random.Intn(len(wordlist))]
-		cd.Contains(word)
-	}
+	benchmarkWordGraph(b, cd)
 }
 
 func BenchmarkTrie(b *testing.B) {
 	cd := trie.NewFromList(wordlist)
-	b.ResetTimer()
-
-	for n := 0; n < b.N; n++ {
-		word := wordlist[random.Intn(len(wordlist))]
-		cd.Contains(word)
-	}
+	benchmarkWordGraph(b, cd)
 }
 
 func BenchmarkMap(b *testing.B) {
@@ -66,12 +46,19 @@ func BenchmarkMap(b *testing.B) {
 	// 	return register[word]
 	// }
 
-	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		word := wordlist[random.Intn(len(wordlist))]
 		// contains(word)
 		if register[word] {
 			// do nothing
 		}
+	}
+}
+
+func benchmarkWordGraph(b *testing.B, cd wordgraph.WordGraph) {
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		word := wordlist[random.Intn(len(wordlist))]
+		cd.Contains(word)
 	}
 }

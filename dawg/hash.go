@@ -4,28 +4,42 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
-	"strings"
 )
 
 func (st *State) getHash() string {
-	if st.hash != "" {
-		return st.hash
-	}
-
-	outbuffer := []string{}
-
-	if st.final {
-		outbuffer = append(outbuffer, "final")
-	}
-	for _, v := range st.children {
-		if v != nil {
-			outbuffer = append(outbuffer, v.getHash())
-		} else {
-			outbuffer = append(outbuffer, "nil")
+	if st.hash == "" {
+		hash := make([]string, 27)
+		if st.final {
+			hash[0] = "final"
 		}
+		for i, c := range st.children {
+			if c != nil {
+				hash[i+1] = c.getHash()
+			} else {
+				hash[i+1] = "nil"
+			}
+		}
+		st.hash = hashFNV64a(fmt.Sprintf("%v", hash))
 	}
-	st.hash = hashFNV32a(strings.Join(outbuffer, ","))
 	return st.hash
+	// if st.hash != "" {
+	// 	return st.hash
+	// }
+	//
+	// outbuffer := []string{}
+	//
+	// if st.final {
+	// 	outbuffer = append(outbuffer, "final")
+	// }
+	// for _, v := range st.children {
+	// 	if v != nil {
+	// 		outbuffer = append(outbuffer, v.getHash())
+	// 	} else {
+	// 		outbuffer = append(outbuffer, "nil")
+	// 	}
+	// }
+	// st.hash = hashFNV32a(strings.Join(outbuffer, ","))
+	// return st.hash
 
 }
 
@@ -42,8 +56,3 @@ func hashFNV32a(in string) string {
 
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
-
-// func TestHash() {
-// 	st := &State{true, &Child{}, ""}
-// 	fmt.Println(st.getHash())
-// }

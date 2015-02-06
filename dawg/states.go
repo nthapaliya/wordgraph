@@ -32,11 +32,12 @@ func last(st *State) (*State, int, error) {
 	return last, indx, nil
 }
 
-func (st *State) addSuffix(suffix string) {
+func (dg *Dawg) addSuffix(st *State, suffix string) {
 	for _, b := range []byte(suffix) {
 		b -= offset
-		st.children[b] = &State{false, &Child{}, ""}
+		st.children[b] = &State{false, &Child{}, "", dg.count + 1}
 		st = st.children[b]
+		dg.count++
 	}
 	st.final = true
 }

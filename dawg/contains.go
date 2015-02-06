@@ -1,6 +1,7 @@
 package dawg
 
 // Contains returns true if string exists in dictionary
+//
 func (dg Dawg) Contains(word string) bool {
 	st := dg.root
 	for _, b := range []byte(word) {

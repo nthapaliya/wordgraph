@@ -34,6 +34,28 @@ var badwords = []string{
 	"verificatio",
 }
 
+func equals(t *testing.T, a, b cdawg.MDawg) bool {
+	if len(a) != len(b) {
+		t.Errorf("wanted len %d, got %d", len(a), len(b))
+		return false
+	}
+	for i := range a {
+		if len(a[i]) != len(b[i]) {
+			t.Errorf("%v != %v", a[i], b[i])
+			return false
+		}
+		for j := range a[i] {
+			val1, val2 := a[i][j]&0xfffffdff, b[i][j]&0xfffffdff
+			if val1 != val2 {
+				t.Errorf("wanted %d, got %d, ", val1, val2)
+				t.Errorf("%v != %v", a[i], b[i])
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func wordSuite(t *testing.T, cd wordgraph.WordGraph) {
 	var good, bad int
 	for _, word := range wordlist {
@@ -62,7 +84,7 @@ func wordSuite(t *testing.T, cd wordgraph.WordGraph) {
 func testListWordGraph(t *testing.T, cd wordgraph.WordGraph) {
 	l := cd.List()
 	if len(l) != len(wordlist) {
-		t.Errorf("Error. len(wordlist)=%d, len(returnedlist)=%d", len(wordlist), len(l))
+		t.Errorf("len(wordlist)=%d, len(returnedlist)=%d", len(wordlist), len(l))
 		return
 	}
 
@@ -83,33 +105,65 @@ func testListWordGraph(t *testing.T, cd wordgraph.WordGraph) {
 	}
 }
 
-func TestCDawg(t *testing.T) {
-	cd := cdawg.NewFromList(wordlist)
-	wordSuite(t, cd)
-	testListWordGraph(t, cd)
-}
-
-func TestCompressDawg(t *testing.T) {
+func _TestCompressDawg(t *testing.T) {
 	dg, err := dawg.NewFromList(wordlist)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	cd := cdawg.Compress(dg)
+	cd, _ := cdawg.Compress(dg)
 	wordSuite(t, cd)
 	testListWordGraph(t, cd)
 }
 
-func TestMinimizeCDawg(t *testing.T) {
-	cd := cdawg.NewFromList(wordlist)
-	mm := cd.Minimize()
+func _TestMinimizeCDawg(t *testing.T) {
+	cd, _ := cdawg.NewFromList(wordlist)
+	mm, _ := cd.Minimize()
 	wordSuite(t, mm)
 	testListWordGraph(t, mm)
 }
 
-func TestMinimizeDawg(t *testing.T) {
-	dg, _ := dawg.NewFromList(wordlist)
-	mm := cdawg.MinimizeDawg(dg)
-	wordSuite(t, mm)
-	testListWordGraph(t, mm)
+func _TestUnminimize(t *testing.T) {
+	cd, _ := cdawg.NewFromList(wordlist)
+	mm, _ := cd.Minimize()
+	newcd := cdawg.Unminimize(mm)
+	if len(cd) != len(newcd) {
+		t.Errorf("unminimized cd not same length as original")
+		return
+	}
+	for i := range cd {
+		for j := range cd[i] {
+			if cd[i][j] != newcd[i][j] {
+				t.Errorf("need %d, got %d", cd[i][j], newcd[i][j])
+				return
+			}
+		}
+	}
+}
+
+func _TestReadWriteFromFile(t *testing.T) {
+	cd, _ := cdawg.NewFromList(wordlist)
+	md, _ := cd.Minimize()
+	err := cdawg.WriteToFile("md.json", md)
+	if err != nil {
+		t.Error(err)
+	}
+
+	md2, err := cdawg.ReadFromFile("md.json")
+	if err != nil {
+		t.Error(err)
+	}
+	if !equals(t, md, md2) {
+		t.Errorf("two are not equal")
+	}
+}
+
+func TestEncodeDecode(t *testing.T) {
+	md, err := cdawg.ReadFromFile("../files/md.json")
+	if err != nil {
+		t.Error(err)
+	}
+	encoded := cdawg.EncodeToBinary(md)
+	decoded := cdawg.DecodeFromBinary(encoded)
+	equals(t, md, decoded)
 }

@@ -11,10 +11,14 @@ type CDawg [][]int
 // NewFromList creates a CDawg from a sorted list of words. If list is unsorted,
 // returns nil
 //
-func NewFromList(wordlist []string) CDawg {
+func NewFromList(wordlist []string) (CDawg, error) {
 	dg, err := dawg.NewFromList(wordlist)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return Compress(dg)
+	cd, err := Compress(dg)
+	if err != nil {
+		return nil, err
+	}
+	return cd, nil
 }

@@ -8,6 +8,7 @@ import (
 
 const (
 	finalBitmask  = 1 << 8
+	eolBitmask    = 1 << 9
 	letterBitmask = 0xff
 	indexShift    = 10
 )
@@ -26,33 +27,39 @@ type smallState struct {
 }
 
 // MinimizeDawg minimizes a dawg.Dawg
-func MinimizeDawg(dg *dawg.Dawg) MDawg {
-	cd := Compress(dg)
+func MinimizeDawg(dg *dawg.Dawg) (MDawg, error) {
+	cd, err := Compress(dg)
+	if err != nil {
+		return nil, err
+	}
 	return cd.Minimize()
 }
 
 // Minimize minimises a CDawg
-func (cd CDawg) Minimize() MDawg {
+func (cd CDawg) Minimize() (MDawg, error) {
 	matrix := make([][]int, len(cd))
-	for i, row := range cd {
+	// null state
+	matrix[0] = []int{eolBitmask}
+
+	for i := 1; i < len(cd); i++ {
+		row := cd[i]
 		for letter, val := range row {
 			if val != 0 {
-				final := val&1 == 1
-				index := val >> 1
-				matrix[i] = append(matrix[i], encode(letter, index, final))
+				encodedvalue := letter + offset
+				// If final, append
+				if val&1 == 1 {
+					encodedvalue += finalBitmask
+				}
+				// val >> 1 == index
+				// add index << indexShift
+				encodedvalue += (val >> 1) << indexShift
+				matrix[i] = append(matrix[i], encodedvalue)
 			}
 		}
+		rowlen := len(matrix[i])
+		matrix[i][rowlen-1] |= eolBitmask
 	}
-	return matrix
-}
-
-func encode(letter, index int, final bool) int {
-	endval := letter + offset
-	if final {
-		endval |= finalBitmask
-	}
-	endval += index << indexShift
-	return int(endval)
+	return matrix, nil
 }
 
 func decode(value int) *smallState {

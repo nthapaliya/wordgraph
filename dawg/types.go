@@ -1,21 +1,26 @@
 package dawg
 
-// Dawg ...
+// Dawg is  directed acyclic word graph. Letters are stored as edges of letters,
+// and prefixes and matching suffixes are merged. This provides fast lookup, at a
+// fraction of the memory consumption of say, a dictionary. It also allows word-related
+// operations like looking up words that start with a specific prefix, for example.
 //
 type Dawg struct {
 	root     *State
 	register map[string]*State
+	count    int
 }
 
-// State ...
+// State holds the flags and outgoing edges to other states
 //
 type State struct {
 	final    bool
 	children *Child
 	hash     string
+	id       int
 }
 
-// Child collection of states
+// Child is a list of outgoing edges
 //
 type Child [26]*State
 

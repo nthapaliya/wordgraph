@@ -1,7 +1,6 @@
 package dawg_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -102,9 +101,4 @@ func TestList(t *testing.T) {
 	if len(l) != 2 {
 		t.Errorf("returned list seems to be wrong, investigate here")
 	}
-}
-
-func _TestHash(t *testing.T) {
-	r := "186a207b"
-	fmt.Println(r)
 }

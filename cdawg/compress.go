@@ -5,54 +5,61 @@ import "github.com/nthapaliya/wordgraph/dawg"
 // Compress takes the pointer-to-node based Dawg structure and converts it
 // into an int matrix CDawg
 //
-func Compress(dg *dawg.Dawg) CDawg {
+func Compress(dg *dawg.Dawg) (CDawg, error) {
+	if ok, err := dg.Verify(); !ok {
+		return nil, err
+	}
+	register := dg.Register()
+	cdlen := len(register) + 1
 
-	indices := getIndices(dg)
-	reg := populateReg(indices)
-	matrix := make([][]int, len(indices))
+	cd := make(CDawg, cdlen)
+	indexOf := make(map[string]int)
+	stateAt := make([]*dawg.State, cdlen)
 
-	for i := range matrix {
-		matrix[i] = make([]int, 26)
+	indexOf[dg.Root().Hash()] = 1
+	stateAt[1] = dg.Root()
 
-		for j, c := range indices[i].Children() {
-			if c != nil {
-				if c.Final() {
-					matrix[i][j] = 1
-				}
-				matrix[i][j] += reg[c.Hash()] << 1
+	for k, v := range register {
+		count := 0
+		for _, child := range v.Children() {
+			if child != nil {
+				count++
 			}
 		}
+		if count == 0 {
+			indexOf[k] = 0
+			stateAt[0] = v
+			cd[0] = make([]int, 26)
+			delete(register, k)
+			break
+		}
 	}
-	return matrix
-}
+	// up to now, removed final state and put it as index = 0
+	// root state is index = 1
+	lastIndex := 1
+	currentIndex := 1
 
-func getIndices(dg *dawg.Dawg) []*dawg.State {
-	indices := []*dawg.State{}
-	encountered := make(map[string]bool)
-	q := newQueue(100)
-	q.push(dg.Root())
+	for len(register) != 0 || currentIndex < cdlen {
+		currentState := stateAt[currentIndex]
+		cd[currentIndex] = make([]int, 26)
 
-	for q.count != 0 {
-		st := q.pop()
-		if !encountered[st.Hash()] {
-			encountered[st.Hash()] = true
-			indices = append(indices, st)
-
-			for _, c := range st.Children() {
-				if c != nil {
-					q.push(c)
+		for letter, child := range currentState.Children() {
+			if child != nil {
+				hash := child.Hash()
+				if v, ok := register[hash]; ok {
+					lastIndex++
+					indexOf[hash] = lastIndex
+					stateAt[lastIndex] = v
+					delete(register, hash)
+				}
+				cd[currentIndex][letter] = indexOf[hash] << 1
+				if child.Final() {
+					cd[currentIndex][letter]++
 				}
 			}
+
 		}
-
+		currentIndex++
 	}
-	return indices
-}
-
-func populateReg(indices []*dawg.State) map[string]int {
-	reg := make(map[string]int)
-	for i, st := range indices {
-		reg[st.Hash()] = i
-	}
-	return reg
+	return cd, nil
 }

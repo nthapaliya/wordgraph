@@ -12,9 +12,9 @@ func (cd CDawg) List() []string {
 // exist in dictionary, returns an empty list
 //
 func (cd CDawg) ListFrom(prefix string) []string {
-	val := 0
+	val := 1 << 1
 	{
-		index := 0
+		index := 1
 		for _, b := range []byte(prefix) {
 			b -= offset
 			val = cd[index][b]
@@ -51,9 +51,9 @@ func (md MDawg) List() []string {
 // exist in dictionary, returns an empty list
 //
 func (md MDawg) ListFrom(prefix string) []string {
-	var value int
+	value := 1 << indexShift
 	{
-		var index int
+		index := 1
 		var ok bool
 
 		for _, b := range []byte(prefix) {
@@ -61,7 +61,6 @@ func (md MDawg) ListFrom(prefix string) []string {
 				return []string{}
 			}
 			index = value >> indexShift
-			// state = value
 		}
 	}
 	f := md.traverseMDawg
@@ -69,11 +68,14 @@ func (md MDawg) ListFrom(prefix string) []string {
 }
 
 func (md MDawg) traverseMDawg(val int, prefix []byte, stream chan string) {
+	if val == eolBitmask {
+		return
+	}
 	if val&finalBitmask != 0 {
 		stream <- string(prefix)
 	}
-	for _, val := range md[val>>indexShift] {
-		md.traverseMDawg(val, append(prefix, byte(val&letterBitmask)), stream)
+	for _, value := range md[val>>indexShift] {
+		md.traverseMDawg(value, append(prefix, byte(value&letterBitmask)), stream)
 	}
 
 }
