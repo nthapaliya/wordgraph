@@ -2,7 +2,7 @@ package dawg
 
 // FromUnsorted creates a Dawg from a slice of unsorted data
 //
-func FromUnsorted(wordlist []string) *Dawg {
+func FromUnsorted(wordlist []string) (*Dawg, error) {
 	dg := &Dawg{
 		root:     &State{final: false, children: &Child{}, hash: "", id: 0},
 		register: make(map[string]*State),
@@ -12,7 +12,7 @@ func FromUnsorted(wordlist []string) *Dawg {
 	for _, word := range wordlist {
 		dg.Add(word)
 	}
-	return dg
+	return dg, nil
 }
 
 // Add adds a word to the dictionary. Add does not have to be called for words in

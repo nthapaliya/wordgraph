@@ -1,9 +1,6 @@
 package dawg
 
-import (
-	"errors"
-	"sort"
-)
+import "sort"
 
 const offset = 'a'
 
@@ -11,7 +8,7 @@ const offset = 'a'
 //
 func NewFromList(wordlist []string) (*Dawg, error) {
 	if !sort.StringsAreSorted(wordlist) {
-		return nil, errors.New("Input is not sorted")
+		return FromUnsorted(wordlist)
 	}
 
 	dg := &Dawg{
