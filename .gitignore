@@ -53,3 +53,5 @@ _testmain.go
 *.tmp
 *.json
 *.zip
+*.gv
+*.svg

@@ -14,6 +14,8 @@ import (
 var (
 	wordlist = wordgraph.LoadFile("files/SWOPODS.txt")
 	random   = rand.New(rand.NewSource(time.Now().Unix()))
+	shuffled = wordgraph.Shuffle(wordlist)
+	slen     = len(shuffled)
 )
 
 func BenchmarkTrie(b *testing.B) {
@@ -60,12 +62,9 @@ func BenchmarkMap(b *testing.B) {
 }
 
 func benchmarkWordGraph(b *testing.B, wg wordgraph.WordGraph) {
-	shuffled := wordgraph.Shuffle(wordlist)
-	length := len(shuffled)
-
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		wg.Contains(shuffled[n%length])
+		wg.Contains(shuffled[n%slen])
 	}
 }

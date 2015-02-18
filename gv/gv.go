@@ -9,17 +9,17 @@ import (
 )
 
 var (
-	shortList = []string{"director", "directorate", "directorship", "fellowship"}
+	cdAll, _   = cdawg.UnmarshalJSON("../files/cd.json")
+	cdSmall, _ = cdawg.UnmarshalJSON("../files/cd.short.json")
 )
 
 func main() {
+	// save(gvPlain(cdSmall), "graph.gv")
 	save(prefixGraph("plane"), "graph.gv")
-	// md, _ := cdawg.NewFromList(shortList)
-	// save(gvPlain(md), "graph.gv")
 }
 
 func prefixGraph(s string) []byte {
-	md, _ := cdawg.UnmarshalJSON("../files/cd.json")
+	md := cdAll
 	listNew := md.ListFrom(s)
 	md, _ = cdawg.NewFromList(listNew)
 
@@ -49,7 +49,7 @@ func gvPlain(md cdawg.CDawg) []byte {
 	// Step 3: Write nodes and labels
 	for _, v := range nodes {
 		if v&(1<<8) != 0 {
-			buf.WriteString(fmt.Sprintf("%d [label=%c, color=red];\n", v, v&0xff))
+			buf.WriteString(fmt.Sprintf("%d [label=%c, color=red, peripheries=2];\n", v, v&0xff))
 		} else {
 			buf.WriteString(fmt.Sprintf("%d [label=%c];\n", v, v&0xff))
 		}
@@ -67,7 +67,8 @@ func gvPlain(md cdawg.CDawg) []byte {
 
 	// Step 5: Other attributes
 	buf.WriteString("concentrate=true;\n")
-	buf.WriteString("horizontal=true;\n")
+	buf.WriteString("mclimit=10.0;\n")
+	buf.WriteString("rankdir=LR;\n")
 
 	// Step 7: Finalize
 	buf.WriteString("}")

@@ -12,12 +12,12 @@ import (
 // Notes: now its 77807. nvm
 
 const (
-	offset = 97
+	offset = 'a'
 )
 
 var (
 	random   = rand.New(rand.NewSource(time.Now().Unix()))
-	wordlist = wordgraph.LoadSame()
+	wordlist = wordgraph.LoadFile("../files/SWOPODS.txt")
 )
 
 var badwords = []string{

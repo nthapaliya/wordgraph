@@ -12,7 +12,7 @@ const (
 	wc = 267751
 )
 
-var wordlist = wordgraph.LoadSame()
+var wordlist = wordgraph.LoadFile("../files/SWOPODS.txt")
 
 func TestNew(t *testing.T) {
 	tr := trie.NewFromList(wordlist)
