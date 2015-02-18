@@ -10,7 +10,6 @@ import (
 // Childnodes are denoted in pretty much the exact same way, but with an EOL (end of list)
 // flag to denote the end of a list of children
 //
-//
 type MDawg []int
 
 func isFinal(value int) bool {
@@ -49,15 +48,12 @@ func (cd CDawg) Minimize() (MDawg, error) {
 	if len(cd) == 0 {
 		return nil, errors.New("Empty CDawg passed in for minimization")
 	}
+	// Step 1: Map from old [i][j]->[i'], where i' = sum of j_0..j_n-1
 	counter := 0
 	newIndex := make(map[int]int)
 	for i := range cd {
-		for range cd[i] {
-			if _, ok := newIndex[i]; !ok {
-				newIndex[i] = counter
-			}
-			counter++
-		}
+		newIndex[i] = counter
+		counter += len(cd[i])
 	}
 	td := make(MDawg, counter)
 
@@ -123,7 +119,7 @@ func (md MDawg) ListFrom(prefix string) []string {
 			index = firstChild(value)
 		}
 	}
-	// if we exit from that block, index will now have our the last good state in the prefix
+	// if we exit from above, index will now have our the last good state in the prefix
 	f := md.traverseMDawg
 	return readFromStream(f, value, prefix)
 }

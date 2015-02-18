@@ -30,6 +30,7 @@ func EncodeToBytes(cd CDawg) ([]byte, error) {
 
 // DecodeFromBytes takes in a byte sequence that is read from a saved binary file
 // representing the CDawg
+//
 func DecodeFromBytes(input []byte) (CDawg, error) {
 	buf := bytes.NewBuffer(input)
 	flatcd := make([]uint32, len(input)/4)

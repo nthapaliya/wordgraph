@@ -47,7 +47,7 @@ func equals(t *testing.T, a, b cdawg.CDawg) bool {
 			return false
 		}
 		for j := range a[i] {
-			val1, val2 := a[i][j]&0xfffffdff, b[i][j]&0xfffffdff
+			val1, val2 := a[i][j], b[i][j]
 			if val1 != val2 {
 				t.Errorf("wanted %d, got %d, ", val1, val2)
 				t.Errorf("%v != %v", a[i], b[i])
