@@ -4,22 +4,27 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"strings"
 )
+
+var runeLen = 128
 
 func (st *State) getHash() string {
 	if st.hash == "" {
-		hash := make([]string, 27)
+		hash := []string{}
+
 		if st.final {
-			hash[0] = "final"
+			hash = append(hash, "final")
 		}
-		for i, c := range st.children {
-			if c != nil {
-				hash[i+1] = c.getHash()
-			} else {
-				hash[i+1] = "nil"
+
+		for i := 0; i < runeLen; i++ {
+			if c, ok := st.children[byte(i)]; ok {
+				hash = append(hash, fmt.Sprintf("(%d->%s)", i, c.getHash()))
 			}
 		}
-		st.hash = hashFNV64a(fmt.Sprintf("%v", hash))
+
+		strepr := strings.Join(hash, " ")
+		st.hash = hashFNV64a(strepr)
 	}
 	return st.hash
 }

@@ -1,11 +1,13 @@
 package dawg
 
-import "errors"
+import "fmt"
 
 // Verify checks that there are no redundant nodes, and that the pruning
 // by the algorithm is successful.
-func (dg *Dawg) Verify() (bool, error) {
+//
+func (dg *Dawg) Verify() error {
 	register := dg.register
+	seen := make(map[string]bool)
 
 	stream := make(chan *State, 1000)
 	go func() {
@@ -14,15 +16,21 @@ func (dg *Dawg) Verify() (bool, error) {
 		close(stream)
 	}()
 
+	redundant := 0
 	for st := range stream {
 		hash := st.hash
-		if _, ok := register[hash]; !ok {
-			if st != dg.root {
-				return false, errors.New("Dawg not minimized")
+		if _, ok := register[hash]; !ok && st != dg.root {
+			// return false, errors.New("Dawg not minimized")
+			if !seen[hash] {
+				redundant++
+				seen[hash] = true
 			}
 		}
 	}
-	return true, nil
+	if redundant == 0 {
+		return nil
+	}
+	return fmt.Errorf("Dawg not minimal. %d unregistered/redundant nodes", redundant)
 }
 
 func _start(st *State, stream chan *State) {

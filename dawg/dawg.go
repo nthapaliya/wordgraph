@@ -1,6 +1,9 @@
 package dawg
 
-import "sort"
+import (
+	"container/list"
+	"sort"
+)
 
 // Dawg is  directed acyclic word graph. Letters are stored as edges of letters,
 // and prefixes and matching suffixes are merged. This provides fast lookup, at a
@@ -11,20 +14,25 @@ type Dawg struct {
 	root     *State
 	register map[string]*State
 	count    int
+	length   int
+	list     *list.List
 }
 
 // State holds the flags and outgoing edges to other states
 //
 type State struct {
 	final    bool
-	children *Child
+	children Child
 	hash     string
 	id       int
+
+	laststate *State
+	lastindex byte
 }
 
 // Child is a list of outgoing edges
 //
-type Child [26]*State
+type Child map[byte]*State
 
 // Root returns a pointer to the root state
 //
@@ -40,7 +48,7 @@ func (st State) Final() bool { return st.final }
 
 // Children returns the list of children
 //
-func (st State) Children() *Child { return st.children }
+func (st State) Children() Child { return st.children }
 
 // Hash looks up the states stored hash, which is required for comparision and
 // optimization. It does not compute the hash: it merely returns the saved state
@@ -53,7 +61,6 @@ func (st State) Hash() string { return st.hash }
 func (dg Dawg) Contains(word string) bool {
 	st := dg.root
 	for _, b := range []byte(word) {
-		b -= offset
 		if st.children[b] == nil {
 			return false
 		}
@@ -94,7 +101,7 @@ func (dg Dawg) ListFrom(prefix string) []string {
 func traverse(st *State, prefix []byte, stream chan string) {
 	for i, st := range st.children {
 		if st != nil {
-			traverse(st, append(prefix, byte(i+offset)), stream)
+			traverse(st, append(prefix, byte(i)), stream)
 		}
 	}
 	if st.final {

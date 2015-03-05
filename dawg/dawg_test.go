@@ -11,10 +11,6 @@ import (
 
 // Notes: now its 77807. nvm
 
-const (
-	offset = 'a'
-)
-
 var (
 	random   = rand.New(rand.NewSource(time.Now().Unix()))
 	wordlist = wordgraph.LoadFile("../files/SWOPODS.txt")
@@ -63,7 +59,7 @@ func TestVerify(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if ok, err := dg.Verify(); !ok {
+	if err := dg.Verify(); err != nil {
 		t.Error(err)
 	}
 }
@@ -80,25 +76,24 @@ func TestExists(t *testing.T) {
 func TestList(t *testing.T) {
 	dg, err := dawg.NewFromList(wordlist)
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
 	l := dg.List()
-	if len(l) != len(wordlist) {
-		t.Errorf("results don't match")
+	if expected, got := len(wordlist), len(l); expected != got {
+		t.Fatalf("lens don't match, expected %d, got %d", expected, got)
 	}
 
 	for i := range wordlist {
-		if l[i] != wordlist[i] {
-			t.Errorf("ExtractFromDawg: results don't match")
+		if expected, got := wordlist[i], l[i]; expected != got {
+			t.Fatalf("expected %s, got %s", expected, got)
 		}
 	}
 	l = dg.ListFrom("applx")
 	if len(l) != 0 {
-		t.Errorf("returning items from prefix that doesn't exist")
+		t.Fatal("returning items from prefix that doesn't exist")
 	}
 	l = dg.ListFrom("apply")
 	if len(l) != 2 {
-		t.Errorf("returned list seems to be wrong, investigate here")
+		t.Fatal("returned list seems to be wrong, investigate here")
 	}
 }
