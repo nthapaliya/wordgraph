@@ -40,7 +40,7 @@ func NewFromList(wordlist []string) (CDawg, error) {
 // into an int matrix CDawg
 //
 func Compress(dg *dawg.Dawg) (CDawg, error) {
-	if ok, err := dg.Verify(); !ok {
+	if err := dg.Verify(); err != nil {
 		return nil, err
 	}
 	register := dg.Register()
@@ -87,7 +87,7 @@ func Compress(dg *dawg.Dawg) (CDawg, error) {
 					stateAt[lastIndex] = v
 					delete(register, hash)
 				}
-				val := (letter + offset) + (indexOf[hash] << indexShift)
+				val := int(letter+offset) + (indexOf[hash] << indexShift)
 				if child.Final() {
 					val += finalBitmask
 				}
